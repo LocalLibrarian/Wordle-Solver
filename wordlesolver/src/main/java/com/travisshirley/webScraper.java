@@ -9,12 +9,12 @@ import java.io.FileWriter;
 public class webScraper {
     //Constants
     static final String OUTFILE = "words.txt"; //Output file name
-    static final String STARTPAGE = //Starting page URL
+    static final String START_PAGE = //Starting page URL
         "https://www.bestwordlist.com/5letterwords.htm";
-    static final int MAXPAGENUM = 26; //Ending page number in URLs
-    static final String MIDPAGESTART = //URL beginning for other pages
+    static final int MAX_PAGE_NUM = 26; //Ending page number in URLs
+    static final String MIDPAGE_START = //URL beginning for other pages
         "https://www.bestwordlist.com/5letterwordspage";
-    static final String MIDPAGEEND = ".htm"; //URL ending for other pages
+    static final String MIDPAGE_END = ".htm"; //URL ending for other pages
 
     public static void main(String[] args) {
         int wordNum = 0;
@@ -30,10 +30,10 @@ public class webScraper {
             WebDriver driver = new ChromeDriver();
 
             //Set the first URL
-            String url = STARTPAGE;
+            String url = START_PAGE;
 
             //Go through all 26 pages
-            while(pageNum <= MAXPAGENUM) {
+            while(pageNum <= MAX_PAGE_NUM) {
                 //Open the page
                 driver.get(url);
 
@@ -66,7 +66,7 @@ public class webScraper {
                     } catch (Exception e) {
                         System.out.println("Could not write to " + 
                             OUTFILE + ", " + "aborting...");
-                        System.out.println(e.getStackTrace());
+                        e.printStackTrace();
                         System.exit(2);
                     }
                 }
@@ -75,7 +75,7 @@ public class webScraper {
                 pageNum += 1;
 
                 //Set next URL
-                url = MIDPAGESTART + pageNum + MIDPAGEEND;
+                url = MIDPAGE_START + pageNum + MIDPAGE_END;
             }
                 
             //Close resources
@@ -89,7 +89,7 @@ public class webScraper {
         } catch (Exception e) {
             System.out.println("Could not open/create " + OUTFILE + ", " +
                         "aborting...");
-            System.out.println(e.getStackTrace());
+            e.printStackTrace();
             System.exit(1);
         }
     }
