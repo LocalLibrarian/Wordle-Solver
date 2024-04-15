@@ -1,6 +1,5 @@
 package com.travisshirley;
 
-//Imports
 import java.io.File;
 import java.util.Scanner;
 import java.util.ArrayList;
@@ -81,8 +80,8 @@ public class sampler {
                     //Close outFile since it is no longer needed
                     outFile.close();
                 } catch (Exception e) {
-                    System.out.println("An integer of size equal to or less " +
-                        "than the size of the dataset was not entered!");
+                    System.out.println("An integer of size equal to or less than " +
+                        "the size of the dataset was not entered!");
                     System.out.println();
                 }
             }
