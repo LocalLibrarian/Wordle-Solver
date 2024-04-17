@@ -2,10 +2,7 @@ package com.travisshirley;
 
 //Imports
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class solver {
     //Constants/globals
@@ -14,7 +11,7 @@ public class solver {
     //List of letters sorted by frequency in the dataset
     static ArrayList<Character> Frequents = new ArrayList<Character>();
     //Default starting word
-    String START = "ADIEU";
+    static String START = "ADIEU";
 
     //Deletes words that are now impossible from ValidWords based on
     //guessResult and guess
@@ -63,54 +60,103 @@ public class solver {
         }
     }
 
-    //Gathers frequency data about the dataset. MUST RUN before deciding first
-    //guess, then doesn't need to run ever again
-    static void gatherFrequencies() {
-        //Init all letters to 0
-        HashMap<Character, Integer> counts = new HashMap<Character, Integer>();
+    //Tries to pick a good guess given current information
+    static String pickGuess(int[] guessResult) {
+        //Create temp list to help pick the guess
+        ArrayList<String> maybeGuess = new ArrayList<String>();
+        for(String entry : ValidWords) {
+            maybeGuess.add(entry);
+        }
+
+        //Create HashMap to hold count of each letter
+        HashMap<Character, Integer> letterCounts = new HashMap<Character,
+        Integer>();
+        //Set value for each letter of alphabet to count of that letter in 
+        //Word
         for(char x : gameSim.Alphabet) {
-            counts.put(x, 0);
+            letterCounts.put(x, 0);
         }
 
-        //Get count of all letters in the dataset
-        for(int i = 0; i < ValidWords.size(); i++) {
-            //Faster access
-            String current = ValidWords.get(i);
-            for(int j = 0; j < gameSim.MAX_LETTERS; j++) {
-                //Same thing as above
-                Character curChar = current.charAt(j);
-                counts.replace(curChar, counts.get(curChar) + 1);
+        /*
+        Find the most common letter in each position and only consider those
+        for guesses until down to the last word
+        */
+        int r = 0;
+        while(r < gameSim.MAX_LETTERS) {
+            //Reset counts
+            for(char x : gameSim.Alphabet) {
+                letterCounts.replace(x, 0);
             }
-        }
 
-        //Sort everything
-        ArrayList<Integer> temp = new ArrayList<>();
-        for (Map.Entry<Character, Integer> entry : counts.entrySet()) {
-            temp.add(entry.getValue());
-        }
-        Collections.sort(temp); 
-        for (int num : temp) {
-            for (Entry<Character, Integer> entry : counts.entrySet()) {
-                if (entry.getValue().equals(num)) {
-                    Frequents.add(entry.getKey());
+            //Get commonality of each letter in each position
+            for(int i = 0; i < maybeGuess.size(); i++) {
+                //Faster access (again)
+                String current = maybeGuess.get(i);
+                Character curChar = current.charAt(r);
+                letterCounts.replace(curChar, letterCounts.get(curChar) + 1);
+            }
+
+            //Find (latest) max in letterCounts
+            int max = 0;
+            char maxChar = 'z';
+            for(char x : gameSim.Alphabet) {
+                if(letterCounts.get(x) > max) {
+                    max = letterCounts.get(x);
+                    maxChar = x;
                 }
             }
+
+            //Only consider words with that have the most common letter in this
+            //position
+            for(int i = 0; i < maybeGuess.size(); i++) {
+                //Faster access (again)
+                String current = maybeGuess.get(i);
+                if(current.charAt(r) != maxChar) {
+                    maybeGuess.remove(i);
+                    i -= 1; //Check new element at i
+                }
+            }
+
+            //Advance to next position
+            r += 1;
         }
-        
-        //Reverse order so first element is most frequent
-        Collections.reverse(Frequents);
+        return maybeGuess.get(0);
     }
 
     public static void main(String[] args) {
         gameSim game = new gameSim();
-        String goal = "MOSSY";
-        String tryer = "BRASS";
-        game.setWord(goal, false);
-        ValidWords = (ArrayList<String>)game.WordsList.clone();
-        gatherFrequencies();
-        eliminateWords(game.guess(tryer), tryer);
-        System.out.println(ValidWords.size());
-        System.out.println(ValidWords.indexOf(goal));
-        System.out.println(ValidWords);
+
+        int r = 0;
+        int wins = 0;
+        int trials = 5000;
+        String winner = "!";
+        String loser = "?";
+        System.out.println("Running " + trials + " trials. Each " + winner +
+            " is a win, and each " + loser + " is a loss:");
+        while(r < trials) {
+            ValidWords.clear();
+            ValidWords.addAll(game.WordsList);
+            game.setWord("", true);
+            //System.out.println("Goal: " + game.Word);
+            String guesser = START;
+            int[] guessRes = game.guess(guesser);
+            eliminateWords(guessRes, guesser);
+            while(guessRes[0] != gameSim.LOSE && ValidWords.size() > 1) {
+                //System.out.println(guesser);
+                guesser = pickGuess(guessRes);
+                guessRes = game.guess(guesser);
+                eliminateWords(guessRes, guesser);
+            }
+            //System.out.println(ValidWords);
+            //System.out.println(game.Guess);
+            if(guessRes[0] != gameSim.LOSE) {
+                wins++;
+                System.out.print(winner);
+            } else System.out.print(loser);
+
+            //Advance to next trial
+            r++;
+        }
+        System.out.println("\nWin rate: " + (double)wins / (double)r);
     }
 }
