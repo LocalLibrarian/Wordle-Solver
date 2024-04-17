@@ -12,7 +12,7 @@ public class solver {
     //List of letters sorted by frequency in the dataset
     static ArrayList<Character> Frequents = new ArrayList<Character>();
     //Default starting word
-    static String START = "ADIEU";
+    static String START = "SALET";
 
     //Deletes words that are now impossible from ValidWords based on
     //guessResult and guess
@@ -134,6 +134,9 @@ public class solver {
         String loser = "?";
         System.out.println("Running " + trials + " trials. Each " + winner +
             " is a win, and each " + loser + " is a loss:");
+        long startTime = System.currentTimeMillis();
+        long trialStartTime = System.currentTimeMillis();
+        long avgTrialTime = 0L;
         while(r < trials) {
             ValidWords.clear();
             ValidWords.addAll(game.WordsList);
@@ -160,8 +163,15 @@ public class solver {
             } else System.out.print(loser);
 
             //Advance to next trial
+            long trialEndTime = System.currentTimeMillis();
+            avgTrialTime += trialEndTime - trialStartTime;
             r++;
         }
-        System.out.println("\nWin rate: " + (double)wins / (double)r);
+        long endTime = System.currentTimeMillis();
+        double totalTime = ((double)endTime - (double)startTime) / 1000.0;
+        System.out.println("\nWin rate: " + (double)wins / (double)trials);
+        System.out.println("Average time per trial: " + 
+            ((double)avgTrialTime / (double)trials) + " ms");
+        System.out.println("Total time taken: " + totalTime + " sec");
     }
 }
