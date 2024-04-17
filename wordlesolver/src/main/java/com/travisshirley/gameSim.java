@@ -10,20 +10,33 @@ import java.util.Scanner;
 public class gameSim {
     //Globals/constants
     //Default data file name
-    static String DEFAULT_FILE = "words.txt";
+    String DEFAULT_FILE = "words.txt";
     //Init of list of valid words
-    static ArrayList<String> WordsList = new ArrayList<String>();
+    public ArrayList<String> WordsList = new ArrayList<String>();
     //Init of current correct word
-    static String Word = "DEFAULT";
+    String Word = "DEFAULT";
     //Array of all letters in alphabet
     static char[] Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     //Current guess count
-    static int Guess = 0;
+    int Guess = 0;
     //Max guess amount
-    static int MAX_GUESSES = 6;
+    int MAX_GUESSES = 6;
+    //Invalid guess number
+    public static int INVALID = -1;
+    //Past max guess number
+    public static int LOSE = -2;
+    //Letter is not in word at all
+    public static int NOT_IN_WORD = 0;
+    //Letter is in word at a different position
+    public static int IN_WORD = 1;
+    //Letter is in word at current position
+    public static int IN_WORD_AT_POSITION = 2;
+    //Max letters in a guess
+    public static int MAX_LETTERS = 5;
+    
 
     //Sets the WordsList to the one from newFile
-    static void setWordsList(String newFile) {
+    public void setWordsList(String newFile) {
         File file = new File(newFile);
         try {
             //Try to open newFile
@@ -46,9 +59,9 @@ public class gameSim {
         }
     }
 
-    //Sets the current Word to word, or something randomly.
+    //Sets the current Word to word, or something randomly and resets Guess
     //Returns if set was successful or not.
-    static boolean setWord(String word, boolean rndm) {
+    public boolean setWord(String word, boolean rndm) {
         //Set Word explicitly if non-random approach
         if(!rndm) {
             //Check if word is valid
@@ -57,6 +70,7 @@ public class gameSim {
             //Set Word to word if it is valid, or return false
             if(has) {
                 Word = word;
+                Guess = 0;
                 return true;
             }
             return false;
@@ -65,11 +79,12 @@ public class gameSim {
         //Randomly pick Word from WordsList
         Collections.shuffle(WordsList);
         Word = WordsList.get(0);
+        Guess = 0;
         return true;
     }
 
     //Returns how many times c occurs in word
-    static int countOccur(char c, String word) {
+    int countOccur(char c, String word) {
         int count = 0;
         for(int i = 0; i < word.length(); i++) {
             if(word.charAt(i) == c) count++;
@@ -81,31 +96,33 @@ public class gameSim {
     Simulates guessing word.
 
     Returns: 5-element array that corresponds to correctness of guess.
-    -2 = past max guesses
-    -1 = invalid word (not in WordsList)
-    0 = letter at given index is not in Word at all (black)
-    1 = letter at given index is in Word, but not this position (yellow)
-    2 = letter at given index is in Word at this position (green)
+    LOSE = past max guesses
+    INVALID = invalid word (not in WordsList)
+    NOT_IN_WORD = letter at given index is not in Word at all (black)
+    IN_WORD = letter at given index is in Word, but not this position (yellow)
+    IN_WORD_AT_POSITION = letter at given index is in Word at this position (green)
 
     Returns have to be handled appropriately by the caller.
     */
-    static int[] guess(String word) {
+    public int[] guess(String word) {
         if(Guess < MAX_GUESSES) {
-            //Return all -1s if invalid guess, as described above
+            //Return all INVALIDs if invalid guess, as described above
             if(!WordsList.contains(word)) {
-                return new int[] {-1, -1, -1, -1, -1};
+                return new int[] {INVALID, INVALID, INVALID, INVALID, INVALID};
             }
 
             //Set Guess to current Guess number
             Guess++;
 
             //Create default array to return
-            int[] result = {0, 0, 0, 0, 0};
+            int[] result = {NOT_IN_WORD, NOT_IN_WORD, NOT_IN_WORD, NOT_IN_WORD,
+                NOT_IN_WORD};
 
             //Create HashMap to hold count of each letter
             HashMap<Character, Integer> letterCounts = new HashMap<Character,
                 Integer>();
-            //Set value for each letter of alphabet to count of that letter in Word
+            //Set value for each letter of alphabet to count of that letter in 
+            //Word
             for(char x : Alphabet) {
                 letterCounts.put(x, countOccur(x, Word));
             }
@@ -114,7 +131,7 @@ public class gameSim {
             for(int i = 0; i < word.length(); i++) {
                 char x = word.charAt(i);
                 if(x == Word.charAt(i)) {
-                    result[i] = 2;
+                    result[i] = IN_WORD_AT_POSITION;
                     letterCounts.replace(x, letterCounts.get(x) - 1);
                 }
             }
@@ -123,8 +140,8 @@ public class gameSim {
             for(int i = 0; i < word.length(); i++) {
                 char x = word.charAt(i);
                 if(Word.indexOf(x) > -1 && letterCounts.get(x) > 0 &&
-                    result[i] == 0) {
-                    result[i] = 1;
+                    result[i] == NOT_IN_WORD) {
+                    result[i] = IN_WORD;
                     letterCounts.replace(x, letterCounts.get(x) - 1);
                 }
             }
@@ -134,11 +151,11 @@ public class gameSim {
         }
 
         //Return indicator of being past max guess amount
-        return new int[] {-2, -2, -2, -2, -2};
+        return new int[] {LOSE, LOSE, LOSE, LOSE, LOSE};
     }
 
     //Prints the given array, element by element
-    static void printArray(int[] arr, String sep) {
+    public void printArray(int[] arr, String sep) {
         System.out.print("{");
         for (int i = 0; i < arr.length; i++) {
             if(i == arr.length - 1) {
@@ -150,24 +167,13 @@ public class gameSim {
         System.out.print("}");
     }
 
-    public static void main(String[] args) {
-        //Set the default WordsList
+    //Constructors
+    public gameSim() {
+        super();
         setWordsList(DEFAULT_FILE);
-
-        setWord("SHOOT", false);
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
-        printArray(guess("BABOO"), " ");
-        System.out.println();
+    }
+    public gameSim(String startFile) {
+        super();
+        setWordsList(startFile);
     }
 }
