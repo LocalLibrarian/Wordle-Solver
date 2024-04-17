@@ -9,8 +9,11 @@ import java.io.FileWriter;
 
 public class sampler {
     //Constants
+    //Name of input file for whole dataset
     static final String INFILE = "words.txt";
+    //Prefix for output files
     static final String SAMPLE_FILE_NAME_START = "words_sample";
+    //Suffix for output files
     static final String SAMPLE_FILE_NAME_END = ".txt";
 
     public static void main(String[] args) {
