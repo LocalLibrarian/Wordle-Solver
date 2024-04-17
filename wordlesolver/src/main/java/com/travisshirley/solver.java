@@ -129,19 +129,15 @@ public class solver {
 
         int r = 0;
         int wins = 0;
-        int trials = 1000;
-        String winner = "!";
-        String loser = "?";
-        System.out.println("Running " + trials + " trials. Each " + winner +
-            " is a win, and each " + loser + " is a loss:");
+        int trials = 5000;
+        System.out.println("Running " + trials + " trials...");
         long startTime = System.currentTimeMillis();
-        long trialStartTime = System.currentTimeMillis();
         long avgTrialTime = 0L;
         while(r < trials) {
+            long trialStartTime = System.currentTimeMillis();
             ValidWords.clear();
             ValidWords.addAll(game.WordsList);
             game.setWord("", true);
-            //System.out.println("Goal: " + game.Word);
             String guesser = START;
             if(!game.inWordsList(START)) {
                 Collections.shuffle(ValidWords);
@@ -150,17 +146,11 @@ public class solver {
             int[] guessRes = game.guess(guesser);
             eliminateWords(guessRes, guesser);
             while(guessRes[0] != gameSim.LOSE && ValidWords.size() > 1) {
-                //System.out.println(guesser);
                 guesser = pickGuess(guessRes);
                 guessRes = game.guess(guesser);
                 eliminateWords(guessRes, guesser);
             }
-            //System.out.println(ValidWords);
-            //System.out.println(game.Guess);
-            if(guessRes[0] != gameSim.LOSE) {
-                wins++;
-                System.out.print(winner);
-            } else System.out.print(loser);
+            if(guessRes[0] != gameSim.LOSE) wins++;
 
             //Advance to next trial
             long trialEndTime = System.currentTimeMillis();
@@ -169,7 +159,8 @@ public class solver {
         }
         long endTime = System.currentTimeMillis();
         double totalTime = ((double)endTime - (double)startTime) / 1000.0;
-        System.out.println("\nWin rate: " + (double)wins / (double)trials);
+        System.out.println("\nDone!\nWin rate: " + (double)wins /
+            (double)trials);
         System.out.println("Average time per trial: " + 
             ((double)avgTrialTime / (double)trials) + " ms");
         System.out.println("Total time taken: " + totalTime + " sec");
