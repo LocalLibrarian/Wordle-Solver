@@ -2,6 +2,7 @@ package com.travisshirley;
 
 //Imports
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class solver {
@@ -128,7 +129,7 @@ public class solver {
 
         int r = 0;
         int wins = 0;
-        int trials = 5000;
+        int trials = 1000;
         String winner = "!";
         String loser = "?";
         System.out.println("Running " + trials + " trials. Each " + winner +
@@ -139,6 +140,10 @@ public class solver {
             game.setWord("", true);
             //System.out.println("Goal: " + game.Word);
             String guesser = START;
+            if(!game.inWordsList(START)) {
+                Collections.shuffle(ValidWords);
+                guesser = ValidWords.get(0);
+            }
             int[] guessRes = game.guess(guesser);
             eliminateWords(guessRes, guesser);
             while(guessRes[0] != gameSim.LOSE && ValidWords.size() > 1) {

@@ -92,6 +92,11 @@ public class gameSim {
         return count;
     }
 
+    //Returns whether word is in WordsList and thus is a valid guess
+    public boolean inWordsList(String word) {
+        return WordsList.contains(word);
+    }
+
     /*
     Simulates guessing word.
 
@@ -100,14 +105,15 @@ public class gameSim {
     INVALID = invalid word (not in WordsList)
     NOT_IN_WORD = letter at given index is not in Word at all (black)
     IN_WORD = letter at given index is in Word, but not this position (yellow)
-    IN_WORD_AT_POSITION = letter at given index is in Word at this position (green)
+    IN_WORD_AT_POSITION = letter at given index is in Word at this position 
+        (green)
 
     Returns have to be handled appropriately by the caller.
     */
     public int[] guess(String word) {
         if(Guess < MAX_GUESSES) {
             //Return all INVALIDs if invalid guess, as described above
-            if(!WordsList.contains(word)) {
+            if(!inWordsList(word)) {
                 return new int[] {INVALID, INVALID, INVALID, INVALID, INVALID};
             }
 
