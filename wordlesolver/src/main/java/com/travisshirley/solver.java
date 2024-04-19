@@ -8,15 +8,32 @@ import java.util.HashMap;
 public class solver {
     //Constants/globals
     //Current list of possible words given current info from guesses
-    static ArrayList<String> ValidWords = new ArrayList<String>();
-    //List of letters sorted by frequency in the dataset
-    static ArrayList<Character> Frequents = new ArrayList<Character>();
+    ArrayList<String> ValidWords = new ArrayList<String>();
     //Default starting word
-    static String START = "SALET";
+    String START = "SALET";
+    //The game simulator
+    gameSim game = new gameSim();
+    //Enumerator for Algorithms
+    public static enum Algorithm {
+        SIXTY_TWO
+    }
+
+    //For returning results from play() function
+    public static class Result {
+        //Values
+        int numGuesses = 0; //How many guesses to arrive at this result
+        boolean won = false; //Whether the game was won or not
+
+        //Constructor
+        Result(int guesses, boolean winner) {
+            numGuesses = guesses;
+            won = winner;
+        }
+    }
 
     //Deletes words that are now impossible from ValidWords based on
     //guessResult and guess
-    static void eliminateWords(int[] guessResult, String guess) {
+    void eliminateWords(int[] guessResult, String guess) {
         //Create list to hold letters that have unknown positions
         ArrayList<Character> maybes = new ArrayList<Character>();
         for(int i = 0; i < guess.length(); i++) {
@@ -62,7 +79,7 @@ public class solver {
     }
 
     //Tries to pick a good guess given current information
-    static String pickGuess(int[] guessResult) {
+    String sixtyTwoAlgo(int[] guessResult) {
         //Create temp list to help pick the guess
         ArrayList<String> maybeGuess = new ArrayList<String>();
         for(String entry : ValidWords) {
@@ -83,6 +100,7 @@ public class solver {
         for guesses until down to the last word
         */
         int r = 0;
+        String nextGuess = "";
         while(r < gameSim.MAX_LETTERS) {
             //Reset counts
             for(char x : gameSim.Alphabet) {
@@ -107,62 +125,77 @@ public class solver {
                 }
             }
 
-            //Only consider words with that have the most common letter in this
-            //position
-            for(int i = 0; i < maybeGuess.size(); i++) {
-                //Faster access (again)
-                String current = maybeGuess.get(i);
-                if(current.charAt(r) != maxChar) {
-                    maybeGuess.remove(i);
-                    i -= 1; //Check new element at i
+            if(game.Guess == 1) {
+                //Try to pick a word eliminating as many other words as possible
+                //on the 2nd guess
+                nextGuess = nextGuess + maxChar;
+            } else {
+                //Only consider words with that have the most common letter in
+                //this position
+                for(int i = 0; i < maybeGuess.size(); i++) {
+                    //Faster access (again)
+                    String current = maybeGuess.get(i);
+                    if(current.charAt(r) != maxChar) {
+                        maybeGuess.remove(i);
+                        i -= 1; //Check new element at i
+                    }
                 }
             }
 
             //Advance to next position
             r += 1;
         }
+
+        //Return the word eliminating as many words as possible if it can,
+        //otherwise return word from main method for this algorithm
+        if(game.Guess == 1) {
+            if(game.inWordsList(nextGuess)) {
+                return nextGuess;
+            }
+            game.Guess -= 1;
+            String res = sixtyTwoAlgo(guessResult);
+            game.Guess += 1;
+            return res;
+        }
         return maybeGuess.get(0);
     }
 
-    public static void main(String[] args) {
-        gameSim game = new gameSim();
-
-        int r = 0;
-        int wins = 0;
-        int trials = 5000;
-        System.out.println("Running " + trials + " trials...");
-        long startTime = System.currentTimeMillis();
-        long avgTrialTime = 0L;
-        while(r < trials) {
-            long trialStartTime = System.currentTimeMillis();
+    //Plays the game using the Algorithm from algo
+    Result play(Algorithm algo) {
+        //Use 64% accurate algorithm, first one I designed
+        if(algo == Algorithm.SIXTY_TWO) {
+            //Init
             ValidWords.clear();
             ValidWords.addAll(game.WordsList);
             game.setWord("", true);
             String guesser = START;
+
+            //Change the starting word if it is somehow not valid
             if(!game.inWordsList(START)) {
                 Collections.shuffle(ValidWords);
                 guesser = ValidWords.get(0);
             }
+
+            //First guess
             int[] guessRes = game.guess(guesser);
             eliminateWords(guessRes, guesser);
-            while(guessRes[0] != gameSim.LOSE && ValidWords.size() > 1) {
-                guesser = pickGuess(guessRes);
+
+            //Keep guessing until lose or win
+            while(guessRes[0] != gameSim.LOSE && guesser != game.Word) {
+                guesser = sixtyTwoAlgo(guessRes);
                 guessRes = game.guess(guesser);
                 eliminateWords(guessRes, guesser);
             }
-            if(guessRes[0] != gameSim.LOSE) wins++;
 
-            //Advance to next trial
-            long trialEndTime = System.currentTimeMillis();
-            avgTrialTime += trialEndTime - trialStartTime;
-            r++;
+            //Return appropriate Result
+            if(guessRes[0] != gameSim.LOSE) {
+                return new Result(game.Guess, true);
+            }
+            return new Result(game.MAX_GUESSES, false);
+        } 
+        
+        else { //Return invalid Result since no valid Algorithm was passed
+            return new Result(gameSim.LOSE, false);
         }
-        long endTime = System.currentTimeMillis();
-        double totalTime = ((double)endTime - (double)startTime) / 1000.0;
-        System.out.println("\nDone!\nWin rate: " + (double)wins /
-            (double)trials);
-        System.out.println("Average time per trial: " + 
-            ((double)avgTrialTime / (double)trials) + " ms");
-        System.out.println("Total time taken: " + totalTime + " sec");
     }
 }
